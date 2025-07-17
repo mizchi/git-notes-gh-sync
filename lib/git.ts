@@ -14,7 +14,11 @@ export class GitClient {
     });
     const output = await cmd.output();
     if (!output.success) {
-      throw new Error(`Failed to add note: ${new TextDecoder().decode(output.stderr)}`);
+      const stderr = new TextDecoder().decode(output.stderr);
+      if (stderr.includes("failed to resolve")) {
+        throw new Error(`Invalid commit reference: ${commit}`);
+      }
+      throw new Error(`Failed to add note: ${stderr}`);
     }
   }
 
@@ -70,7 +74,7 @@ export class GitClient {
 
   async getCommitMessage(commit: string): Promise<string> {
     const cmd = new Deno.Command("git", {
-      args: ["log", "-1", "--format=%s", commit],
+      args: ["log", "-1", "--format=%B", commit],
       cwd: this.cwd,
     });
     const output = await cmd.output();

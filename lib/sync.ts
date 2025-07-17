@@ -79,7 +79,16 @@ export class GitNotesGitHubSync {
   async syncIssueToCommit(commit: string, issueNumber: number): Promise<void> {
     console.log(`Syncing issue #${issueNumber} to commit ${commit.substring(0, 7)}`);
     
-    const issue = await this.github.getIssue(issueNumber);
+    let issue: GitHubIssue;
+    try {
+      issue = await this.github.getIssue(issueNumber);
+    } catch (error) {
+      if (error.message.includes("404")) {
+        console.error(`Error: Issue #${issueNumber} not found`);
+        return;
+      }
+      throw error;
+    }
     const note = this.formatIssueNote(issue);
     
     if (this.dryRun) {
@@ -93,7 +102,16 @@ export class GitNotesGitHubSync {
   async syncPullRequestToCommits(prNumber: number): Promise<void> {
     console.log(`Syncing PR #${prNumber}`);
     
-    const pr = await this.github.getPullRequest(prNumber);
+    let pr: GitHubPullRequest;
+    try {
+      pr = await this.github.getPullRequest(prNumber);
+    } catch (error) {
+      if (error.message.includes("404")) {
+        console.error(`Error: Pull Request #${prNumber} not found`);
+        return;
+      }
+      throw error;
+    }
     const prNote = this.formatPullRequestNote(pr);
     
     // Get all commits in the PR
